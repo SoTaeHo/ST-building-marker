@@ -32,14 +32,28 @@
         android:layout_height="0dp"
         android:layout_weight="1">
 
-        <TextView
-            android:id="@+id/information"
+        <ScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@color/white"
-            android:padding="16dp"
-            android:textSize="16sp"
-            android:text="마커를 클릭하거나 건물을 검색해주세요" />
+            android:layout_above="@id/btnViewTogether">
+
+            <TextView
+                android:id="@+id/information"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/white"
+                android:padding="16dp"
+                android:textSize="16sp"
+                android:text="@string/basicText" />
+        </ScrollView>
+
+        <Button
+            android:id="@+id/btnViewTogether"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_toStartOf="@+id/btnCurrentLocation"
+            android:text="@string/viewTogether" />
 
         <ImageButton
             android:id="@+id/btnCurrentLocation"
@@ -47,9 +61,7 @@
             android:layout_height="34dp"
             android:layout_alignParentEnd="true"
             android:layout_alignParentBottom="true"
-            android:layout_marginLeft="16dp"
             android:layout_marginEnd="8dp"
-            android:layout_marginRight="16dp"
             android:layout_marginBottom="8dp"
             android:src="@drawable/my_location" />
     </RelativeLayout>

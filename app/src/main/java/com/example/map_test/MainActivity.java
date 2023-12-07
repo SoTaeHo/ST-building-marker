@@ -7,7 +7,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.cursoradapter.widget.CursorAdapter;
 import androidx.cursoradapter.widget.SimpleCursorAdapter;
 
@@ -19,13 +18,14 @@ import android.location.Location;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -35,11 +35,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.android.gms.tasks.OnSuccessListener;
-
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -184,14 +180,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     };
     private GoogleMap mMap;
     private TextView information;
+    private Button btnViewTogether;
+    private ImageButton btnCurrentLocation;
     private FusedLocationProviderClient fusedLocationClient;
     private SearchView searchView;
-    private Map<String, Marker> markerMap = new HashMap<>();
+    private final Map<String, Marker> markerMap = new HashMap<>();
+    private Marker selectedMarker;
 
-    String[] permissions = {
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_COARSE_LOCATION,
-    };
     private CursorAdapter suggestionAdapter;
 
     @SuppressLint("UseSupportActionBar")
@@ -210,37 +205,76 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         // Android에서 위치 정보를 가져오기 위한 Google Play Services 라이브러리 참조
         // 직접 제작한 현재 위치로 이동하는 버튼
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-        ImageButton btnCurrentLocation = findViewById(R.id.btnCurrentLocation);
-        btnCurrentLocation.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                // 현재 위치에 접근할 때 필요한 permission 확인
-                if (ActivityCompat.checkSelfPermission(
-                        MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION)
-                        != PackageManager.PERMISSION_GRANTED
-                        && ActivityCompat.checkSelfPermission(
-                                MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION)
-                        != PackageManager.PERMISSION_GRANTED) {
-                    ActivityCompat.requestPermissions(
-                            MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
-                    return;
-                }
-                // permission이 확인되었다면 현재 위치의 위도와 경도를 받아옴
-                fusedLocationClient.getLastLocation().addOnSuccessListener(
-                        MainActivity.this, new OnSuccessListener<Location>() {
-                    @Override
-                    public void onSuccess(Location location) {
+        btnCurrentLocation = findViewById(R.id.btnCurrentLocation);
+        btnCurrentLocation.setOnClickListener(view -> {
+            // 현재 위치에 접근할 때 필요한 permission 확인
+            if (ActivityCompat.checkSelfPermission(
+                    MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION)
+                    != PackageManager.PERMISSION_GRANTED
+                    && ActivityCompat.checkSelfPermission(
+                    MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                    != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(
+                        MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+                return;
+            }
+            // permission이 확인되었다면 현재 위치의 위도와 경도를 받아옴
+            fusedLocationClient.getLastLocation().addOnSuccessListener(
+                    MainActivity.this, location -> {
                         if (location != null) {
                             LatLng currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
                             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 15));
                         }
-                    }
-                });
-            }
+                    });
         });
         // toolbar를 적용하여 검색에 활용
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        // 같이보기 버튼에 Listener 추가
+        btnViewTogether = findViewById(R.id.btnViewTogether);
+        btnViewTogether.setOnClickListener(view -> {
+            // 마커의 위치
+            if (selectedMarker != null) {
+                LatLng markerPosition = selectedMarker.getPosition();
+                // 현재 위치 (예시)
+                final LatLng[] currentPosition = new LatLng[1];
+                if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    return;
+                }
+                // getLastLocation()은 비동기적으로 작동하기 때문에 getLastLocation()의 결과는 Listener 내부에서만 유효
+                // 해당 method가 완료되기 전에는 currentPosition[0]의 값이 설정되지 않음
+                fusedLocationClient.getLastLocation().addOnSuccessListener(
+                        MainActivity.this, location -> {
+                            if (location != null) {
+                                currentPosition[0] = new LatLng(location.getLatitude(), location.getLongitude());
+                                System.out.println("success");
+
+                                System.out.println(currentPosition[0]);
+                                // LatLngBounds 생성
+                                LatLngBounds.Builder builder = new LatLngBounds.Builder();
+                                builder.include(markerPosition);
+                                System.out.println("check1");
+                                builder.include(currentPosition[0]);
+                                System.out.println("check2");
+                                LatLngBounds bounds = builder.build();
+                                System.out.println("check3");
+
+
+                                // 카메라 이동 (여백 추가를 위해 마지막 인자로 padding 값을 설정)
+                                int padding = 100; // 화면 가장자리와 객체 사이의 공간(픽셀 단위)
+                                CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
+
+                                // 지도 카메라 업데이트
+                                mMap.animateCamera(cu);
+                            } else {
+                                System.out.println("not success");
+                            }
+                        });
+            } else {
+                Toast.makeText(getApplicationContext(), "마커를 선택해주세요", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     @Override
@@ -272,9 +306,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     onMarkerClick(marker);
                     return false;
                 }
-                for (int i = 0; i < name.length; i++) {
-                    if (name[i].contains(query)) {
-                        marker = markerMap.get(name[i]);
+                for (String s : name) {
+                    if (s.contains(query)) {
+                        marker = markerMap.get(s);
                         if (marker != null) {
                             onMarkerClick(marker);
                             return false;
@@ -314,7 +348,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     //  GoogleMap 객체의 이벤트 및 사용자 상호작용을 처리하는 콜백 인터페이스
     @SuppressLint("MissingPermission")
     @Override
-    public void onMapReady(final GoogleMap googleMap) {
+    public void onMapReady(@NonNull final GoogleMap googleMap) {
         mMap = googleMap;
 //        // LatLngBounds를 이용하여 제약을 둘 공간을 생성
 //        LatLngBounds limitation = new LatLngBounds(
@@ -353,7 +387,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 .add(new LatLng(37.63069729071907, 127.07627305128595))
                 .add(new LatLng(37.630285217221534, 127.07647686656554));
 
-        Polyline polyline = mMap.addPolyline(polylineOptions);
+        mMap.addPolyline(polylineOptions);
 
         // 건물에 대한 마커 추가
         for (int i = 0; i < name.length; i++) {
@@ -370,7 +404,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mMap.setOnMarkerClickListener(this);
 
         // 현재 위치로 이동하는 기능을 사용하기 위해 permission 확인
-        checkPermissions(permissions);
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // 위치 권한 요청
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
@@ -390,6 +423,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         information.setText(marker.getTitle() + "\n" + marker.getSnippet());
         searchView.setQuery("", false); // true로 설정하면 자동으로 검색 실행
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(marker.getPosition(), 19.0f));
+        selectedMarker = marker;
         return true; // 이벤트 처리가 완료되었음을 나타냄
     }
 
@@ -405,39 +439,20 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 .show();
         return false;
     }
-    public void checkPermissions(String[] permissions) {
-        ArrayList<String> targetList = new ArrayList<String>();
 
-        for (int i = 0; i < permissions.length; i++) {
-            String curPermission = permissions[i];
-            int permissionCheck = ContextCompat.checkSelfPermission(this, curPermission);
-            if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(this, curPermission + " 권한 있음.", Toast.LENGTH_LONG).show();
-            } else {
-                Toast.makeText(this, curPermission + " 권한 없음.", Toast.LENGTH_LONG).show();
-                if (ActivityCompat.shouldShowRequestPermissionRationale(this, curPermission)) {
-                    Toast.makeText(this, curPermission + " 권한 설명 필요함.", Toast.LENGTH_LONG).show();
-                } else {
-                    targetList.add(curPermission);
-                }
-            }
-        }
-        String[] targets = new String[targetList.size()];
-        targetList.toArray(targets);
-        if (targets.length > 0) {
-            ActivityCompat.requestPermissions(this, targets, 101);
-        }
-    }
     @Override
-    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch (requestCode) {
-            case 101: {
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Toast.makeText(this, "승인", Toast.LENGTH_LONG).show();
-                } else {
-                    Toast.makeText(this, "거부", Toast.LENGTH_LONG).show();
-                }
+
+        if (requestCode == 1) {
+            // 모든 요청된 권한이 승인되었는지 확인
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+                // 모든 권한이 승인됨
+                Toast.makeText(this, "권한이 승인되었어요.", Toast.LENGTH_SHORT).show();
+            } else {
+                // 적어도 하나의 권한이 거부됨
+                Toast.makeText(this, "거절된 권한이 있어요.", Toast.LENGTH_SHORT).show();
+
             }
         }
     }
@@ -447,9 +462,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         markerMap.put(title, marker); // 제목으로 마커 매핑
     }
 
-    // 검색 제안을 업데이트하는 메소드
+    // 검색 제안을 업데이트하는 method
     private void updateSearchSuggestions(String query) {
-        // 예시를 위한 임시 데이터 생성. 실제로는 데이터베이스, API 등에서 데이터를 로드해야 함
         MatrixCursor cursor = new MatrixCursor(new String[]{"_id", "name"});
         for (int i = 0; i < name.length; i++) {
             if (name[i].contains(query)) {
