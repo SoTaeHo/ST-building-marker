@@ -271,8 +271,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
 
-        Button testBtn = findViewById(R.id.testBtn);
-        testBtn.setOnClickListener(view -> {
+        Button getRouteBtn = findViewById(R.id.getRouteBtn);
+        getRouteBtn.setOnClickListener(view -> {
             if (selectedMarker != null) {
                 LatLng markerLocation = selectedMarker.getPosition();
                 new Thread(() -> {
@@ -311,7 +311,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
                                 // 지도 카메라 업데이트
                                 mMap.animateCamera(cu);
-
                             }
                         });
                     } catch (Exception e) {
