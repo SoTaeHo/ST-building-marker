@@ -22,6 +22,7 @@ Java기반으로 구현하였습니다.
 ![marker_click](/image/marker_click.PNG)  
 ![route](/image/route.PNG)  
 ![together](/image/together.PNG)
+![all](/image/all.png)
 
 ## 기능
 
