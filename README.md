@@ -16,12 +16,7 @@
 ## 프로젝트 소개
 
 서울과학기술대학교의 지리에 익숙하지 않은 사람들을 위한 앱입니다.  
-Java기반으로 구현하였습니다.  
-![start](/image/start.PNG)  
-![search](/image/search.PNG)  
-![marker_click](/image/marker_click.PNG)  
-![route](/image/route.PNG)  
-![together](/image/together.PNG)
+Java기반으로 구현하였습니다.
 ![all](/image/all.png)
 
 ## 기능
