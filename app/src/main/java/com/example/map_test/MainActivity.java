@@ -248,23 +248,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         MainActivity.this, location -> {
                             if (location != null) {
                                 currentPosition[0] = new LatLng(location.getLatitude(), location.getLongitude());
-                                System.out.println("success");
-
-                                System.out.println(currentPosition[0]);
                                 // LatLngBounds 생성
                                 LatLngBounds.Builder builder = new LatLngBounds.Builder();
                                 builder.include(markerPosition);
-                                System.out.println("check1");
                                 builder.include(currentPosition[0]);
-                                System.out.println("check2");
                                 LatLngBounds bounds = builder.build();
-                                System.out.println("check3");
-
-
                                 // 카메라 이동 (여백 추가를 위해 마지막 인자로 padding 값을 설정)
                                 int padding = 100; // 화면 가장자리와 객체 사이의 공간(픽셀 단위)
                                 CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
-
                                 // 지도 카메라 업데이트
                                 mMap.animateCamera(cu);
                             } else {
