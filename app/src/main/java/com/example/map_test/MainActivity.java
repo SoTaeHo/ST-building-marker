@@ -14,6 +14,7 @@ import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.MatrixCursor;
+import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
 import android.view.Menu;
@@ -35,8 +36,10 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback,
@@ -188,6 +191,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Marker selectedMarker;
 
     private CursorAdapter suggestionAdapter;
+    private Polyline route;
 
     @SuppressLint("UseSupportActionBar")
     @Override
@@ -262,6 +266,58 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 System.out.println("not success");
                             }
                         });
+            } else {
+                Toast.makeText(getApplicationContext(), "마커를 선택해주세요", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        Button testBtn = findViewById(R.id.testBtn);
+        testBtn.setOnClickListener(view -> {
+            if (selectedMarker != null) {
+                LatLng markerLocation = selectedMarker.getPosition();
+                new Thread(() -> {
+                    try {
+                        String origin = coordinates[10].latitude + "," + coordinates[10].longitude;
+                        String destination = markerLocation.latitude + "," + markerLocation.longitude;
+                        String apiKey = "YOUR KEY";
+
+                        DirectionsApiRequest request = new DirectionsApiRequest();
+                        String jsonResponse = request.requestDirections(origin, destination, apiKey);
+
+                        DirectionsJsonParser parser = new DirectionsJsonParser();
+                        List<LatLng> path = parser.parse(jsonResponse);
+                        runOnUiThread(() -> {
+                            if (path != null && !path.isEmpty()) {
+                                PolylineOptions polylineOptions = new PolylineOptions()
+                                        .addAll(path)
+                                        .width(12)
+                                        .color(Color.BLUE)
+                                        .geodesic(true);
+                                if (route != null) {
+                                    route.remove();
+                                    route = null;
+                                }
+                                route = mMap.addPolyline(polylineOptions);
+
+                                LatLngBounds.Builder builder = new LatLngBounds.Builder();
+                                builder.include(coordinates[10]);
+                                builder.include(markerLocation);
+                                // 폴리라인의 각 점을 LatLngBounds.Builder에 추가
+                                for (LatLng point : route.getPoints()) {
+                                    builder.include(point);
+                                }
+                                LatLngBounds bounds = builder.build();
+                                int padding = 200; // 화면 가장자리와 객체 사이의 공간(픽셀 단위)
+                                CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
+                                // 지도 카메라 업데이트
+                                mMap.animateCamera(cu);
+
+                            }
+                        });
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }).start();
             } else {
                 Toast.makeText(getApplicationContext(), "마커를 선택해주세요", Toast.LENGTH_SHORT).show();
             }

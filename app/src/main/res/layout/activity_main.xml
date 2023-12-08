@@ -48,6 +48,14 @@
         </ScrollView>
 
         <Button
+            android:id="@+id/testBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_toStartOf="@+id/btnViewTogether"
+            android:text="@string/Route" />
+
+        <Button
             android:id="@+id/btnViewTogether"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

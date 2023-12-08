@@ -4,4 +4,5 @@
     <string name="search">검색</string>
     <string name="basicText">마커를 클릭하거나 건물을 검색해주세요</string>
     <string name="viewTogether">같이보기</string>
+    <string name="Route">경로보기</string>
 </resources>
