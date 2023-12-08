@@ -271,15 +271,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
 
-        Button getRouteBtn = findViewById(R.id.getRouteBtn);
-        getRouteBtn.setOnClickListener(view -> {
+        Button btnGetRoute = findViewById(R.id.btnGetRoute);
+        btnGetRoute.setOnClickListener(view -> {
             if (selectedMarker != null) {
                 LatLng markerLocation = selectedMarker.getPosition();
                 new Thread(() -> {
                     try {
                         String origin = coordinates[10].latitude + "," + coordinates[10].longitude;
                         String destination = markerLocation.latitude + "," + markerLocation.longitude;
-                        String apiKey = "YOUR KEY";
+                        String apiKey = "API KEY";
 
                         DirectionsApiRequest request = new DirectionsApiRequest();
                         String jsonResponse = request.requestDirections(origin, destination, apiKey);
